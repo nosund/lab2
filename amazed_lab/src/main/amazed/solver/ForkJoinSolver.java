@@ -69,6 +69,40 @@ public class ForkJoinSolver
 
     private List<Integer> parallelSearch()
     {
+        int id = 0;
+        int forkCount = forkAfter-1;
+        int player = maze.newPlayer(start);
+        frontier.push(start);
+        while(!frontier.empty()){
+            int current = frontier.pop();
+            if(maze.hasGoal(current)){
+                maze.move(player, current);
+                return pathFromTo(start, current);
+            }
+
+            if(!visited.contains(current)){
+                maze.move(player, current);
+                visited.add(current);
+                //här ska nya threads skapas
+                if(forkCount==0){                    
+                    //id += maze.neighbors(current).size();
+                    //för varje cell bredvid current
+                    for(int nb: maze.neighbors(current)){
+                        maze.newPlayer(nb);                        
+                    }
+                    fork();
+                    forkCount = forkAfter-1;
+                }
+                else if(forkCount>0){
+                    for (int nb: maze.neighbors(current)){
+                        frontier.push(nb);
+                        if (!visited.contains(nb)){
+                            predecessor.put(nb, current);
+                        }
+                    }
+                }
+            }
+        }
         return null;
     }
 }
