@@ -19,9 +19,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
  */
 
 
-public class ForkJoinSolver
-    extends SequentialSolver
-{
+public class ForkJoinSolver extends SequentialSolver{
     /**
      * Creates a solver that searches in <code>maze</code> from the
      * start node to a goal.
