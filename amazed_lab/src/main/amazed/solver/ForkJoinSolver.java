@@ -30,6 +30,11 @@ public class ForkJoinSolver extends SequentialSolver{
     {
         super(maze);
     }
+    private ForkJoinSolver(int start,Maze maze)
+    {
+        this(maze);
+        this.start = start;
+    }
 
     /**
      * Creates a solver that searches in <code>maze</code> from the
@@ -73,22 +78,24 @@ public class ForkJoinSolver extends SequentialSolver{
         frontier.push(start);
         while(!frontier.empty()){
             int current = frontier.pop();
+            //om målet ligger på current
             if(maze.hasGoal(current)){
                 maze.move(player, current);
                 return pathFromTo(start, current);
             }
-
+            //om current node inte besökts, lägg till i visited och flytta till noden
             if(!visited.contains(current)){
                 maze.move(player, current);
                 visited.add(current);
+                forkCount -= 1;
                 //här ska nya threads skapas
                 if(forkCount==0){                    
                     //id += maze.neighbors(current).size();
                     //för varje cell bredvid current
                     for(int nb: maze.neighbors(current)){
-                        maze.newPlayer(nb);                        
+                        ForkJoinSolver fs = new ForkJoinSolver(nb, maze);
+                        fs.fork();
                     }
-                    fork();
                     forkCount = forkAfter-1;
                 }
                 else if(forkCount>0){
@@ -97,6 +104,7 @@ public class ForkJoinSolver extends SequentialSolver{
                         if (!visited.contains(nb)){
                             predecessor.put(nb, current);
                         }
+
                     }
                 }
             }
