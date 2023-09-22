@@ -30,6 +30,7 @@ public class ForkJoinSolver extends SequentialSolver{
     {
         super(maze);
     }
+    //takes nb as start and starts searching 
     private ForkJoinSolver(int start,Maze maze)
     {
         this(maze);
@@ -72,7 +73,7 @@ public class ForkJoinSolver extends SequentialSolver{
 
     private List<Integer> parallelSearch()
     {
-        int id = 0;
+        int numNB = 0;
         int forkCount = forkAfter-1;
         int player = maze.newPlayer(start);
         frontier.push(start);
@@ -93,9 +94,15 @@ public class ForkJoinSolver extends SequentialSolver{
                     //id += maze.neighbors(current).size();
                     //för varje cell bredvid current
                     for(int nb: maze.neighbors(current)){
+                    //om nb inte besökts innan; 
+                        if(!visited.contains(nb)){
+                            frontier.push(nb);
+                            numNB ++;
+                        }
                         ForkJoinSolver fs = new ForkJoinSolver(nb, maze);
                         fs.fork();
                     }
+                    
                     forkCount = forkAfter-1;
                 }
                 else if(forkCount>0){
