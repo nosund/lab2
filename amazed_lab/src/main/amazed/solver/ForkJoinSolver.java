@@ -29,6 +29,7 @@ public class ForkJoinSolver extends SequentialSolver{
     public ForkJoinSolver(Maze maze)
     {
         super(maze);
+        //visited.add(start);
     }
     //takes nb as start and starts searching 
     private ForkJoinSolver(int start,Maze maze)
@@ -71,10 +72,14 @@ public class ForkJoinSolver extends SequentialSolver{
         return parallelSearch();
     }
 
-    private List<Integer> parallelSearch()
+    private List<Integer> parallelSearch(){
+        return parallelSearch(start);
+    }
+
+    private List<Integer> parallelSearch(int start)
     {
         int numNB = 0;
-        int forkCount = forkAfter-1;
+        int forkCount = forkAfter;
         int player = maze.newPlayer(start);
         frontier.push(start);
         while(!frontier.empty()){
@@ -85,33 +90,39 @@ public class ForkJoinSolver extends SequentialSolver{
                 return pathFromTo(start, current);
             }
             //om current node inte besökts, lägg till i visited och flytta till noden
+            maze.move(player, current);
+            forkCount -= 1;
             if(!visited.contains(current)){
-                maze.move(player, current);
                 visited.add(current);
-                forkCount -= 1;
-                //här ska nya threads skapas
                 if(forkCount==0){                    
                     //id += maze.neighbors(current).size();
                     //för varje cell bredvid current
+                    numNB = 0;
                     for(int nb: maze.neighbors(current)){
                     //om nb inte besökts innan; 
                         if(!visited.contains(nb)){
-                            frontier.push(nb);
+                            predecessor.put(nb, current);
                             numNB ++;
                         }
-                        ForkJoinSolver fs = new ForkJoinSolver(nb, maze);
-                        fs.fork();
+                        if(numNB==1){
+                            visited.add(nb);
+                            frontier.push(nb);
+                        }
+                        else if(numNB > 1){
+                        
+                            ForkJoinSolver fs = new ForkJoinSolver(nb, maze);
+                            fs.fork();
+                        }                          
                     }
-                    
-                    forkCount = forkAfter-1;
+                    forkCount = forkAfter;
                 }
+                    //här ska nya threads skapas
                 else if(forkCount>0){
                     for (int nb: maze.neighbors(current)){
                         frontier.push(nb);
                         if (!visited.contains(nb)){
                             predecessor.put(nb, current);
                         }
-
                     }
                 }
             }
