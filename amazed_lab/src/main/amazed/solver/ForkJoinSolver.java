@@ -36,6 +36,7 @@ public class ForkJoinSolver extends SequentialSolver{
     {
         this(maze);
         this.start = start;
+        visited.add(start);
     }
 
     /**
@@ -90,22 +91,26 @@ public class ForkJoinSolver extends SequentialSolver{
                 return pathFromTo(start, current);
             }
             //om current node inte besökts, lägg till i visited och flytta till noden
-            maze.move(player, current);
             forkCount -= 1;
             if(!visited.contains(current)){
+                maze.move(player, current);
                 visited.add(current);
                 if(forkCount==0){                    
-                    //id += maze.neighbors(current).size();
                     //för varje cell bredvid current
+                    forkCount = forkAfter;
                     numNB = 0;
                     for(int nb: maze.neighbors(current)){
                     //om nb inte besökts innan; 
-                        if(!visited.contains(nb)){
-                            predecessor.put(nb, current);
+                        if(visited.add(nb)){
+                            frontier.push(nb);
                             numNB ++;
                         }
+                        else{
+                            continue;
+                        }
+                        //om minst en väg finns, lägg till i visited och 
                         if(numNB==1){
-                            visited.add(nb);
+                            predecessor.put(nb, current);
                             frontier.push(nb);
                         }
                         else if(numNB > 1){
@@ -114,10 +119,9 @@ public class ForkJoinSolver extends SequentialSolver{
                             fs.fork();
                         }                          
                     }
-                    forkCount = forkAfter;
                 }
                     //här ska nya threads skapas
-                else if(forkCount>0){
+                    if(forkCount>0){
                     for (int nb: maze.neighbors(current)){
                         frontier.push(nb);
                         if (!visited.contains(nb)){
