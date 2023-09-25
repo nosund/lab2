@@ -20,12 +20,21 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 
 public class ForkJoinSolver extends SequentialSolver{
+    protected class gubbe{
+        final ForkJoinSolver thread;
+        final int start;
+        gubbe(ForkJoinSolver thread, int start){
+            this.thread = thread;
+            this.start = start;
+        }
+    }
     /**
      * Creates a solver that searches in <code>maze</code> from the
      * start node to a goal.
      *
      * @param maze   the maze to be searched
      */
+    static private boolean goal;
     public ForkJoinSolver(Maze maze)
     {
         super(maze);
@@ -37,6 +46,7 @@ public class ForkJoinSolver extends SequentialSolver{
         this(maze);
         this.start = start;
         visited.add(start);
+        this.thread = thread;
     }
 
     /**
@@ -80,55 +90,66 @@ public class ForkJoinSolver extends SequentialSolver{
     private List<Integer> parallelSearch(int start)
     {
         int numNB = 0;
-        int forkCount = forkAfter;
+        //int forkCount = forkAfter;
         int player = maze.newPlayer(start);
         frontier.push(start);
+        List<gubbe> threads = new ArrayList<>();
         while(!frontier.empty()){
             int current = frontier.pop();
             //om målet ligger på current
             if(maze.hasGoal(current)){
                 maze.move(player, current);
+                goal = true;
                 return pathFromTo(start, current);
             }
+            if(goal == true){
+                break;
+            }
             //om current node inte besökts, lägg till i visited och flytta till noden
-            forkCount -= 1;
+            //forkCount -= 1;
             if(!visited.contains(current)){
                 maze.move(player, current);
                 visited.add(current);
-                if(forkCount==0){                    
+                //if(forkCount==0){                    
                     //för varje cell bredvid current
-                    forkCount = forkAfter;
-                    numNB = 0;
-                    for(int nb: maze.neighbors(current)){
-                    //om nb inte besökts innan; 
-                        if(visited.add(nb)){
-                            frontier.push(nb);
-                            numNB ++;
-                        }
-                        else{
-                            continue;
-                        }
-                        //om minst en väg finns, lägg till i visited och 
-                        if(numNB==1){
-                            predecessor.put(nb, current);
-                            frontier.push(nb);
-                        }
-                        else if(numNB > 1){
-                        
-                            ForkJoinSolver fs = new ForkJoinSolver(nb, maze);
-                            fs.fork();
-                        }                          
+                numNB = 0;
+                for(int nb: maze.neighbors(current)){
+                    frontier.push(nb);
+                //om nb inte besökts innan; 
+                    if(!visited.contains(nb)){
+                        numNB ++;
+                    }
+                    else{
+                        continue;
+                    }
+                    //om minst en väg finns, lägg till i visited och 
+                    if(numNB==1){
+                        predecessor.put(nb, current);
+                        frontier.push(nb);
+                    }
+                    else if(numNB > 1){
+                    
+                        ForkJoinSolver fs = new ForkJoinSolver(nb, maze);
+                        fs.fork();
+                    }
+                        //forkCount = forkAfter;                       
+                    //}
+                }
+                for(gubbe thread: threads){
+                    List<Integer> path = thread.thread.join();
+                    if(thread.thread.join() != null){
+                        pathFromTo(start, thread.start);
                     }
                 }
                     //här ska nya threads skapas
-                    if(forkCount>0){
+                /*else if(forkCount>0){
                     for (int nb: maze.neighbors(current)){
                         frontier.push(nb);
                         if (!visited.contains(nb)){
                             predecessor.put(nb, current);
                         }
                     }
-                }
+                }*/
             }
         }
         return null;
