@@ -92,11 +92,10 @@ public class ForkJoinSolver extends SequentialSolver{
      */
     @Override
     public List<Integer> compute() {
-        int steps = 0;
-        return parallelSearch(steps);
+        return parallelSearch();
     }
 
-    private List<Integer> parallelSearch(int steps){
+    private List<Integer> parallelSearch(){
         //return parallelSearch(start);
     //}
 
@@ -108,6 +107,7 @@ public class ForkJoinSolver extends SequentialSolver{
         List<gubbe> threads = new ArrayList<>();
         List<Integer> pathFromTo = null;
         List<ForkJoinSolver>fos = new ArrayList<>();
+        int steps = 0;
         
         while(!frontier.empty()){
             int current = frontier.pop();
@@ -116,13 +116,13 @@ public class ForkJoinSolver extends SequentialSolver{
             if(maze.hasGoal(current)){
                 maze.move(player, current);
                 goalFound.set(true);
+                frontier.clear();
                 pathFromTo = pathFromTo(start, current);
                 break;
             }
             if(goalFound.get()){
                 break;
             }
-
             maze.move(player, current);
             steps ++;
             int numNB = 0;
@@ -151,23 +151,27 @@ public class ForkJoinSolver extends SequentialSolver{
                     fos.add(fs);
                 }
             }
-            if(steps>forkAfter){
+            if(steps>forkAfter&&numNB>0){
                 for(ForkJoinSolver i : fos){
+                    if(goalFound.get()){
+                        break;
+                    }
                     i.fork();
                 }
+                fos.clear();
                 steps = 0;
             }
 
         }
         //här ska nya threads skapas
         for(gubbe thread: threads){
-            if(goalFound.get()){
-                break;
-            }
             List<Integer> path = thread.thread.join();
             if(thread.thread.join() != null) {
                 pathFromTo = pathFromTo(start, thread.start);
                 pathFromTo.addAll(path);
+            }
+            else{
+                continue;
             }
         }
 
