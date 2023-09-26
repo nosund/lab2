@@ -108,6 +108,9 @@ public class ForkJoinSolver extends SequentialSolver{
         List<Integer> pathFromTo = null;
         List<ForkJoinSolver>fos = new ArrayList<>();
         int steps = 0;
+        if(forkAfter==9){
+            forkAfter = 3;
+        }
         
         while(!frontier.empty()){
             int current = frontier.pop();
@@ -116,7 +119,6 @@ public class ForkJoinSolver extends SequentialSolver{
             if(maze.hasGoal(current)){
                 maze.move(player, current);
                 goalFound.set(true);
-                frontier.clear();
                 pathFromTo = pathFromTo(start, current);
                 break;
             }
