@@ -162,6 +162,7 @@ public class ForkJoinSolver extends SequentialSolver{
             if(steps > forkAfter){
                 for(gubbe i : threads){
                     i.thread.fork();
+                    //hade kunnat "poppa" senaste elementet och satt en gräns på antalet forks mha en counter
                 }
             }
             else{
