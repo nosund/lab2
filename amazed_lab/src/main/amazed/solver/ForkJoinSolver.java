@@ -153,15 +153,17 @@ public class ForkJoinSolver extends SequentialSolver{
                     gubbe gubben = new gubbe(fs, current);
                     threads.add(gubben);
                     threads_join.add(gubben);
-/* 
-                    threads.add(new gubbe(fs, current));
-                    threads_join.add(gubbe(fs,current));
-                    */
+
                 }
             }
+            int forkcount = 0;
             if(steps > forkAfter){
-                for(gubbe i : threads){
-                    i.thread.fork();
+                for(int i = threads.size()-1 ; i>=0 ; i--){
+                    forkcount ++;
+                    threads.get(i).thread.fork();
+                    if (forkcount == 3){
+                        break;
+                    }
                     //hade kunnat "poppa" senaste elementet och satt en gräns på antalet forks mha en counter
                 }
             }
