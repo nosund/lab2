@@ -105,16 +105,16 @@ public class ForkJoinSolver extends SequentialSolver{
         int player = maze.newPlayer(start);
         frontier.push(start);
         List<gubbe> threads = new ArrayList<>();
+        List<gubbe> threads_join = new ArrayList<>();
         List<Integer> pathFromTo = null;
-        List<ForkJoinSolver>fos = new ArrayList<>();
         int steps = 0;
-        if(forkAfter==9){
+        /*if(forkAfter==9){
             forkAfter = 3;
-        }
-        
+        }*/
+
         while(!frontier.empty()){
             int current = frontier.pop();
-           
+                       
             //om målet ligger på current
             if(maze.hasGoal(current)){
                 maze.move(player, current);
@@ -125,6 +125,7 @@ public class ForkJoinSolver extends SequentialSolver{
             if(goalFound.get()){
                 break;
             }
+
             maze.move(player, current);
             steps ++;
             int numNB = 0;
@@ -149,34 +150,39 @@ public class ForkJoinSolver extends SequentialSolver{
                 
                 else if(numNB > 1){
                     ForkJoinSolver fs = new ForkJoinSolver(nb, maze);
+                    gubbe gubben = new gubbe(fs, current);
+                    threads.add(gubben);
+                    threads_join.add(gubben);
+/* 
                     threads.add(new gubbe(fs, current));
-                    fos.add(fs);
+                    threads_join.add(gubbe(fs,current));
+                    */
                 }
             }
-            if(steps>forkAfter&&numNB>0){
-                for(ForkJoinSolver i : fos){
-                    if(goalFound.get()){
-                        break;
-                    }
-                    i.fork();
+            if(steps > forkAfter){
+                for(gubbe i : threads){
+                    i.thread.fork();
                 }
-                fos.clear();
-                steps = 0;
-            }
-
-        }
-        //här ska nya threads skapas
-        for(gubbe thread: threads){
-            List<Integer> path = thread.thread.join();
-            if(thread.thread.join() != null) {
-                pathFromTo = pathFromTo(start, thread.start);
-                pathFromTo.addAll(path);
             }
             else{
                 continue;
             }
+            threads.clear();
+            steps = 0;
         }
-
+        
+        //här ska threads joinas
+        for(gubbe thread: threads_join){
+            List<Integer> path = thread.thread.join();
+            if(thread.thread.join() != null) {
+                pathFromTo = pathFromTo(start, thread.start);
+                pathFromTo.addAll(path);
+                System.out.println("gubbe joinad");
+            }
+            else{
+                System.out.println(start + " and " + thread.start);
+            }
+        }
         return pathFromTo;
     }
 }
